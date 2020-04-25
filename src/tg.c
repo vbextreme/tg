@@ -36,9 +36,11 @@ void tg_begin(tg_s* tg, const char* fontName, const char* fontFall, int size, co
 	tg->fontSize = (unsigned)size;
 	dbg_info("use %u font size", tg->fontSize);
 	tg->fontName = fontName ? fontName : TG_DEFAULT_FONT;
-	tg->fontFallback = fontFall ? fontFall : fontName;
+	tg->fontFallback = fontFall ? fontFall : tg->fontName;
+	dbg_info("fonts:%s fallback:%s", tg->fontName, tg->fontFallback);
 
 	tg->fonts = ft_fonts_new();
+	if( !tg->fonts ) err_fail("creating fonts");
 	ftFont_s* font = ft_fonts_load(tg->fonts, tg->fontName, "main");
 	if( !font ) err_fail("unable to load %s font", tg->fontName);
 	ft_font_size(font, size, size);
