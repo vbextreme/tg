@@ -1,7 +1,7 @@
 ###########
 # project #
 ###########
-project('Terminal Graphics', 'c')
+project('Terminal Graphics', 'c', version: '0.2', license: 'gplv3')
 projectName = 'tg'
 
 cc = meson.get_compiler('c')
