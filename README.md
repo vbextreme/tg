@@ -67,6 +67,10 @@ select aspect ratio -1 no scale, 0 auto, 1 width, 2 height.<br/>
 -r --raw
 ```
 tell a software to save image in only text format, this not works with gif or video, with this format can display image with _cat_,<br/>
+```
+-p --patterns
+```
+change pattern glyph
 ###conversion examples
 display image.png on terminal.<br/>
 ```
@@ -82,7 +86,10 @@ save image.png on image.tgi and display.<br/>
 $ tg -cfFsio 'Source Code Pro' 'Symbola' 11 image.png image.tgi
 $ tg -i image.tgi
 ```
-
+display image with no unicode character
+```
+$ tg -cfFspi 'Source Code Pro' 'Symbola' 11 ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ/.,;:!@#%^$&*()_-+=[]{}|' image.png
+```
 
 To uninstall it:
 ==============
