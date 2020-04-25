@@ -1,9 +1,10 @@
-Terminal Graphics v0.3
+Terminal Graphics v0.4
 ========================
 Display image and video on terminal<br/>
 
 State:
 ======
+* 0.4 remove dbg, begin seeking video
 * 0.3 only -i for view tgi
 * 0.2 aur
 * 0.1   start release

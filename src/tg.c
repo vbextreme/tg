@@ -291,7 +291,7 @@ __private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
 	if( rows > tg->screenRow ) err_fail("math rows %u > %u", rows, tg->screenRow);
 	frame = g2d_new(cols * tg->fontW, rows * tg->fontH, -1);
 	media_resize_set(video, frame);
-
+	
 	unsigned fps = media_fps(video);
 	int ret;
 	double ts = time_dbls();
@@ -299,6 +299,14 @@ __private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
 	double durate = media_duration(video);
 	dbg_info("fps:%u durate:%fms", fps, durate);
 	durate /= 1000.0;
+
+	if( !isnan(tg->seeking) ){
+		dbg_info("seeking %fs durate %f", tg->seeking, durate);
+		durate -= tg->seeking;
+		dbg_info("new durate %fs", durate);
+		media_seek_to(video, tg->seeking);
+		//media_seek(video, tg->seeking * 1000.0);
+	}
 
 	while( (ret=media_decode(video)) > -1 ){
 		if( !ret ) continue;
@@ -357,8 +365,8 @@ __private void tg_img_free(tgImg_s* img){
 	free(img);
 }
 
-void tg_convert(tg_s* tg, int aspectRatio, int tgi){
-	tgImg_s* ret = tg_convert_image(tg, aspectRatio);
+void tg_convert(tg_s* tg, int tgi){
+	tgImg_s* ret = tg_convert_image(tg, tg->aspectRatio);
 	if( ret ){
 		if( tg->out ){
 			if( tgi ){
@@ -378,7 +386,7 @@ void tg_convert(tg_s* tg, int aspectRatio, int tgi){
 	}
 	err_clear();
 
-	tgImg_s** vfr = tg_convert_gif(tg, aspectRatio);
+	tgImg_s** vfr = tg_convert_gif(tg, tg->aspectRatio);
 	if( vfr ){
 		if( tg->out ){
 			if( tgi ){
@@ -405,7 +413,7 @@ void tg_convert(tg_s* tg, int aspectRatio, int tgi){
 	if( !tg->out ) err_fail("no output file for media");
 	if( !tgi ) err_fail("no raw mode on media");
 	FILE* f = tg_save_header(tg->out);
-	if( tg_convert_media(tg, aspectRatio, f) ){
+	if( tg_convert_media(tg, tg->aspectRatio, f) ){
 		fclose(f);
 		unlink(tg->out);
 		err_fail("unable convert");

@@ -30,6 +30,7 @@ typedef struct tg{
 	ftRender_s** vfcr;
 	int* vfcrbits;
 	ftFonts_s* fonts;
+	double seeking;
 	unsigned fontSize;
 	unsigned screenCol;
 	unsigned screenRow;
@@ -37,6 +38,7 @@ typedef struct tg{
 	unsigned fontH;
 	unsigned imgW;
 	unsigned imgH;
+	int aspectRatio;
 }tg_s;
 
 typedef struct tgImg{
@@ -50,7 +52,7 @@ typedef struct tgImg{
 
 void tg_begin(tg_s* tg, const char* fontName, const char* fontFall, int size, const char* finput, const char* foutput, utf8_t* patterns);
 void tg_end(tg_s* tg);
-void tg_convert(tg_s* tg, int aspectRatio, int tgi);
+void tg_convert(tg_s* tg, int tgi);
 void tg_view(tg_s* tg);
 
 

@@ -15,6 +15,7 @@ typedef enum{
 
 long defaultSize = 12;
 long defaultRatio = 0;
+double seek = SNAN;
 
 argdef_s args[] = {
 	{0, 'h', "help",     ARGDEF_NOARG,  NULL,          "help/usage"},
@@ -27,6 +28,7 @@ argdef_s args[] = {
 	{0, 'p', "patterns", ARGDEF_STR,    NULL,          "select character use for display image"},
 	{0, 'a', "aspect",   ARGDEF_SIGNED, &defaultRatio, "select aspet ratio, -1 no scale, 0 auto, 1 width, 2 height"},
 	{0, 'r', "raw",      ARGDEF_NOARG,  NULL,          "save raw mode"},
+	{0, 'S', "seek",     ARGDEF_DOUBLE, &seek,          "TODO NOT WORKING seeking video to seconds from start"},
 	{0,  0 , NULL,       ARGDEF_NOARG,  NULL,          NULL}
 };
 
@@ -56,10 +58,12 @@ int main(int argc, char** argv){
 		(utf8_t*)opt_arg_str(args, ARG_PATT)
 	);
 	
+	tg.seeking = seek;
+	tg.aspectRatio = defaultRatio;
+
 	if( opt_enabled(args, ARG_CONVERT) ){
 		tg_convert(
 			&tg,
-			defaultRatio,
 			!opt_enabled(args, ARG_RAW)
 		);
 	}
