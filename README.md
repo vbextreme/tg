@@ -1,18 +1,18 @@
-#Terminal Graphics v0.3
+# Terminal Graphics v0.3
 Display image and video on terminal<br/>
 
-##State:
+## State:
 * 0.3 only -i for view tgi
 * 0.2 aur
 * 0.1   start release
 * 0.0.0 begin of crazy
 
-##Bug:
+## Bug:
 
 Require Developer version of:
 EasyFramework<br/>
 
-##To install it:
+## To install it:
 ### arch
 ```
 $ yay -S terminalgraphics
@@ -25,8 +25,8 @@ $ ninja
 $ sudo ninja install
 ```
 
-##Doc:
-###conversion
+## Doc:
+### conversion
 tg can display png,jpeg,bmp,svg,gif and all video on your terminal.<br/>
 to do this it needs some information which is also difficult to obtain automatically, the software need of 3 principal arguments<br/>
 ```
@@ -69,7 +69,7 @@ change pattern glyph
 -S --seek
 ```
 start video at seconds in double value, only for video
-###conversion examples
+### conversion examples
 display image.png on terminal.<br/>
 ```
 $ tg --fonts 'Source Code Pro' --fallback 'Symbola' --size 11 --convert --input image.png
@@ -89,4 +89,4 @@ display image with no unicode character
 $ tg -cfFspi 'Source Code Pro' 'Symbola' 11 ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ/.,;:!@#%^$&*()_-+=[]{}|' image.png
 ```
 
-##To uninstall it:
+## To uninstall it:
