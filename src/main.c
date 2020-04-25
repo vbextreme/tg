@@ -63,6 +63,9 @@ int main(int argc, char** argv){
 			!opt_enabled(args, ARG_RAW)
 		);
 	}
+	else{
+		tg_view(&tg);
+	}
 	
 	tg_end(&tg);
 err_print();

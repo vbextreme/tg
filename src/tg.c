@@ -30,7 +30,7 @@ void tg_begin(tg_s* tg, const char* fontName, const char* fontFall, int size, co
 	winsize_s ws;
 	if( term_winsize_get(&ws) ) err_fail("unable to read screen info");
 	tg->screenCol = ws.ws_col - 1;
-	tg->screenRow = ws.ws_row - 1;
+	tg->screenRow = ws.ws_row - 2;
 	dbg_info("scrC:%u", tg->screenCol);
 	dbg_info("scrR:%u", tg->screenRow);
 	tg->fontSize = (unsigned)size;
@@ -88,6 +88,51 @@ void tg_end(tg_s* tg){
 	term_end();	
 }
 
+__private void tg_save_raw(tgImg_s* img, const char* fname){
+	FILE* f = fopen(fname, "w");
+	if( !f ){
+		err_pushno("%s", fname);
+		err_fail("save file %s", fname);
+	}
+	fwrite(img->img, sizeof(char), img->end - img->img, f);
+	fclose(f);
+}
+
+__private void tg_save_frame(tgImg_s* img, FILE* fd){
+	size_t sz = (img->end - img->img) + 1;
+	fwrite(&sz, sizeof(size_t), 1, fd);
+	fwrite(&img->delay, sizeof(size_t), 1, fd);
+	fwrite(&img->fps, sizeof(unsigned), 1, fd);
+	fwrite(img->img, sizeof(char), sz, fd);
+}
+
+__private FILE* tg_save_header(const char* fname){
+	FILE* f = fopen(fname, "w");
+	if( !f ){
+		err_pushno("%s", fname);
+		err_fail("save file %s", fname);
+	}
+	int magic = TGI_MAGICK;
+	fwrite(&magic , sizeof(int), 1, f);
+	return f;
+}
+
+__private tgImg_s* tg_load_frame(FILE* fd){
+	tgImg_s* img = mem_new(tgImg_s);
+	if( fread(&img->size, sizeof(size_t), 1, fd) <= 0 ){ free(img); return NULL; }
+	if( fread(&img->delay, sizeof(size_t), 1, fd) <= 0){ free(img); return NULL; }
+	if( fread(&img->fps, sizeof(unsigned), 1, fd) <= 0){ free(img); return NULL; }
+
+	img->img = mem_many(char, img->size);
+	if( fread(img->img, sizeof(char), img->size, fd)<=0 ){ free(img->img);free(img); return NULL; }
+
+	return img;
+}
+
+__private void tg_frame_free(tgImg_s* img){
+	free(img->img);
+	free(img);
+}
 
 /*************/
 /*** STAGE ***/
@@ -123,7 +168,6 @@ __private utf_t tg_pattern_find(tg_s* tg, g2dImage_s* bw, g2dCoord_s* ipos){
 	return bestUtf;
 }
 
-
 __private void tg_convert_put(tgImg_s* ti, g2dImage_s* img, g2dColor_t* color, utf_t utf){
 	char tmp[256];
 	utf8_t pch[8] = {0};
@@ -155,12 +199,13 @@ __private tgImg_s* tg_convert_g2d(tg_s* tg, g2dImage_s* img, unsigned cols, unsi
 	out->end = out->img;
 	*out->end = 0;
 	out->delay = 0;
+	out->fps = 0;
 
 	__g2d_free g2dImage_s* gray = g2d_copy(img);
 	g2d_luminance(gray);
 	g2dColor_t dom[2];
 
-	
+	__parallef
 	for( unsigned r = 0; r < rows; ++r ){
 		g2dCoord_s pos = { 
 			.x = 0, 
@@ -197,36 +242,112 @@ __private tgImg_s* tg_convert_image(tg_s* tg, int aspectRatio){
 	return tg_convert_g2d(tg, img, cols, rows);	
 }
 
+__private tgImg_s** tg_convert_gif(tg_s* tg, int aspectRatio){
+	unsigned rows, cols;
+	unsigned w = tg->fontW * tg->screenCol;
+	unsigned h = tg->fontH * tg->screenRow;
+
+	gif_s* gif = g2d_load_gif(tg->inp);
+	if( !gif ) return NULL;
+	g2d_gif_resize(gif, w, h, aspectRatio);
+
+	cols = gif->frames[0].img->w / tg->fontW;
+	rows = gif->frames[0].img->h / tg->fontH;
+	if( cols > tg->screenCol ) err_fail("math cols %u > %u", cols, tg->screenCol);
+	if( rows > tg->screenRow ) err_fail("math rows %u > %u", rows, tg->screenRow);
+
+	size_t count = vector_count(gif->frames);
+	tgImg_s** tgi = vector_new(tgImg_s*, count, 1);
+	vector_foreach(gif->frames, i){
+		tgImg_s* tgframe = tg_convert_g2d(tg, gif->frames[i].img, cols, rows);
+		tgframe->delay = gif->frames[i].delay;
+		tgframe->fps = 0;
+		vector_push_back(tgi, tgframe);
+		fprintf(stderr, "\r%.1f%%", (i*100.0)/count);
+	}
+	fprintf(stderr, "\r");
+	fprintf(stderr,"100.0%%\n");
+	g2d_gif_free(gif);
+
+	return tgi;
+}
+__private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
+	unsigned rows, cols;
+	unsigned w = tg->fontW * tg->screenCol;
+	unsigned h = tg->fontH * tg->screenRow;
+	dbg_info("fw %u fh %u max frame size %u*%u", tg->fontW, tg->fontH, w, h);
+
+	media_s* video = media_load(tg->inp);
+	if( !video ) return -1;
+	
+	g2dImage_s* frame = media_frame_get(video);
+	g2d_ratio(aspectRatio, frame->w, frame->h, &w, &h);
+	cols = w / tg->fontW;
+	rows = h / tg->fontH;
+	dbg_info("original %u*%u scale %u*%u cr %u*%u", frame->w, frame->h, w, h, cols, rows);
+	if( cols > tg->screenCol ) err_fail("math cols %u > %u", cols, tg->screenCol);
+	if( rows > tg->screenRow ) err_fail("math rows %u > %u", rows, tg->screenRow);
+	frame = g2d_new(cols * tg->fontW, rows * tg->fontH, -1);
+	media_resize_set(video, frame);
+
+	unsigned fps = media_fps(video);
+	int ret;
+	double ts = time_dbls();
+	size_t nframes = 0;
+	double durate = media_duration(video);
+	dbg_info("fps:%u durate:%fms", fps, durate);
+	durate /= 1000.0;
+
+	while( (ret=media_decode(video)) > -1 ){
+		if( !ret ) continue;
+		tgImg_s* tgframe = tg_convert_g2d(tg, frame, cols, rows);
+		tgframe->fps = fps;
+		tg_save_frame(tgframe, fdout);
+		++nframes;
+		double te = time_dbls() - ts;
+		double cfps = nframes/te;
+		double apxs = (double)nframes / (double)fps;
+		fprintf(stderr, "\r%.1ffps %.1fs %.1f%%", cfps,apxs,(apxs*100.0)/durate);
+	}
+	fprintf(stderr, "\n");
+	dbg_info("converted %lu frames", nframes);
+	err_clear();	
+	media_free(video);
+	return 0;
+}
+
+__private size_t tg_count_line(char* str){
+	size_t count = 0;
+	while( (str=strchr(str, '\n')) ){
+		++str;
+		++count;
+	}
+	return count + 1;
+}
+
 __private void tg_display(tgImg_s* img){
 	term_print_str(img->img);
 	term_flush();
 }
 
-__private void tg_save_raw(tgImg_s* img, const char* fname){
-	FILE* f = fopen(fname, "w");
-	if( !f ){
-		err_pushno("%s", fname);
-		err_fail("save file %s", fname);
-	}
-	fwrite(img->img, sizeof(char), img->end - img->img, f);
-	fclose(f);
-}
+__private void tg_display_gif(tgImg_s** frames){
+	size_t count = vector_count(frames);
+	int r,c;
+	size_t lines = tg_count_line(frames[0]->img);
 
-__private void tg_save_frame(tgImg_s* img, FILE* fd){
-	fwrite(&img->size, sizeof(size_t), 1, fd);
-	fwrite(&img->delay, sizeof(size_t), 1, fd);
-	fwrite(img->img, sizeof(char), img->end - img->img, fd);
-}
+	tg_display(frames[0]);
+	term_cursor_position(&r, &c);
+	r -= lines;
+	if( r < 0 ) err_fail("position rows");
+	delay_ms(frames[0]->delay);
 
-__private FILE* tg_save_header(const char* fname){
-	FILE* f = fopen(fname, "w");
-	if( !f ){
-		err_pushno("%s", fname);
-		err_fail("save file %s", fname);
+	for(size_t i = 1; i < count; ++i){
+		term_gotorc(r,c);
+		tg_display(frames[i]);
+		delay_ms(frames[i]->delay);
 	}
-	int magic = TGI_MAGICK;
-	fwrite(&magic , sizeof(int), 1, f);
-	return f;
+	term_print("\n");
+	term_flush();
 }
 
 __private void tg_img_free(tgImg_s* img){
@@ -253,7 +374,93 @@ void tg_convert(tg_s* tg, int aspectRatio, int tgi){
 		tg_img_free(ret);
 		return;
 	}
+	err_clear();
 
-	err_fail("unable convert image");
+	tgImg_s** vfr = tg_convert_gif(tg, aspectRatio);
+	if( vfr ){
+		if( tg->out ){
+			if( tgi ){
+				FILE* f = tg_save_header(tg->out);
+				vector_foreach(vfr, i){
+					tg_save_frame(vfr[i], f);
+				}
+				fclose(f);
+			}
+			else{
+				err_fail("gif not supported raw format");
+			}
+		}
+		else{
+			tg_display_gif(vfr);
+		}
+		vector_foreach(vfr, i){
+			tg_img_free(vfr[i]);
+		}
+		vector_free(vfr);
+		return;
+	}
+
+	if( !tg->out ) err_fail("no output file for media");
+	if( !tgi ) err_fail("no raw mode on media");
+	FILE* f = tg_save_header(tg->out);
+	if( tg_convert_media(tg, aspectRatio, f) ){
+		fclose(f);
+		unlink(tg->out);
+		err_fail("unable convert");
+	}
+	fclose(f);
 }
 
+void tg_view(tg_s* tg){
+	FILE* fd = fopen(tg->inp, "r");
+	if( !fd ){
+		err_pushno("fopen");
+		err_fail("on open %s", tg->inp);
+	}
+
+	int magic;
+	fread(&magic, sizeof(int), 1, fd);
+	if( magic != TGI_MAGICK ) err_fail("invalid tgi magick");	
+
+	size_t ts = time_us();
+	tgImg_s* frame = tg_load_frame(fd);
+	if( !frame ) err_fail("no frame saved");
+
+	int r,c;
+	size_t lines = tg_count_line(frame->img);
+	size_t sync = frame->fps ? 1000000 / frame->fps : 0;
+
+	tg_display(frame);
+
+	term_cursor_position(&r, &c);
+	r -= lines;
+	if( r < 0 ) err_fail("position rows");
+	
+	if( frame->delay ){
+		delay_ms(frame->delay);
+	}
+	else if( sync ){
+		size_t us = time_us() - ts;
+		if( us < sync ) usleep(sync-us);	
+		ts=time_us();
+	}
+	tg_frame_free(frame);
+
+	while( (frame=tg_load_frame(fd)) ){
+		term_gotorc(r,c);
+		tg_display(frame);
+		if( frame->delay ){
+			delay_ms(frame->delay);
+		}
+		else if( sync ){
+			size_t us = time_us() - ts;
+			if( us < sync ) usleep(sync-us);
+			ts=time_us();
+		}
+		tg_frame_free(frame);
+	}
+	term_print("\n");
+	term_flush();
+
+	fclose(fd);
+}
