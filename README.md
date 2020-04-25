@@ -9,7 +9,7 @@ Display image and video on terminal<br/>
 
 ## Bug:
 
-Require Developer version of:
+## Dependencies:
 EasyFramework<br/>
 
 ## To install it:
