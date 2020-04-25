@@ -5,6 +5,7 @@ Display image and video on terminal<br/>
 State:
 ======
 * 0.2 aur
+* 0.2 aur
 * 0.1   start release
 * 0.0.0 begin of crazy
 
