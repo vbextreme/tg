@@ -1,29 +1,23 @@
-Terminal Graphics v0.4
-========================
+#Terminal Graphics v0.3
 Display image and video on terminal<br/>
 
-State:
-======
-* 0.4 remove dbg, begin seeking video
+##State:
 * 0.3 only -i for view tgi
 * 0.2 aur
 * 0.1   start release
 * 0.0.0 begin of crazy
 
-Bug:
-====
+##Bug:
 
 Require Developer version of:
-=============================
 EasyFramework<br/>
 
-To install it:
-==============
-## arch
+##To install it:
+### arch
 ```
 $ yay -S terminalgraphics
 ```
-## manual build
+### manual build
 ```
 $ meson build
 $ cd build
@@ -31,9 +25,8 @@ $ ninja
 $ sudo ninja install
 ```
 
-Doc:
-================
-##conversion
+##Doc:
+###conversion
 tg can display png,jpeg,bmp,svg,gif and all video on your terminal.<br/>
 to do this it needs some information which is also difficult to obtain automatically, the software need of 3 principal arguments<br/>
 ```
@@ -72,6 +65,10 @@ tell a software to save image in only text format, this not works with gif or vi
 -p --patterns
 ```
 change pattern glyph
+```
+-S --seek
+```
+start video at seconds in double value, only for video
 ###conversion examples
 display image.png on terminal.<br/>
 ```
@@ -92,6 +89,4 @@ display image with no unicode character
 $ tg -cfFspi 'Source Code Pro' 'Symbola' 11 ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ/.,;:!@#%^$&*()_-+=[]{}|' image.png
 ```
 
-To uninstall it:
-==============
-
+##To uninstall it:

@@ -304,10 +304,10 @@ __private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
 		dbg_info("seeking %fs durate %f", tg->seeking, durate);
 		durate -= tg->seeking;
 		dbg_info("new durate %fs", durate);
-		media_seek_to(video, tg->seeking);
+		media_seek(video, tg->seeking);
 		//media_seek(video, tg->seeking * 1000.0);
 	}
-
+	
 	while( (ret=media_decode(video)) > -1 ){
 		if( !ret ) continue;
 		tgImg_s* tgframe = tg_convert_g2d(tg, frame, cols, rows);
