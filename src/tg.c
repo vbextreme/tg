@@ -305,7 +305,6 @@ __private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
 		durate -= tg->seeking;
 		dbg_info("new durate %fs", durate);
 		media_seek(video, tg->seeking);
-		//media_seek(video, tg->seeking * 1000.0);
 	}
 	
 	while( (ret=media_decode(video)) > -1 ){
@@ -317,6 +316,7 @@ __private err_t tg_convert_media(tg_s* tg, int aspectRatio, FILE* fdout){
 		double te = time_dbls() - ts;
 		double cfps = nframes/te;
 		double apxs = (double)nframes / (double)fps;
+		if( !isnan(tg->durate) && apxs >= tg->durate ) break;
 		fprintf(stderr, "\r%.1ffps %.1fs %.1f%%", cfps,apxs,(apxs*100.0)/durate);
 	}
 	fprintf(stderr, "\n");

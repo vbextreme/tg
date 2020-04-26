@@ -1,7 +1,12 @@
-# Terminal Graphics v0.3
+#Terminal Graphics v0.6
 Display image and video on terminal<br/>
+terminal need support of 24k color.<br/>
+tested terminal: urxvt+tmux, xterm, tilda, linux console(is not 24k, set pattern to ascii).<br/>
+failed: urxvt if not build with 24k support.<br/>
 
 ## State:
+* 0.5 complete seeking support
+* 0.4 remove dbg log, begin sekking support
 * 0.3 only -i for view tgi
 * 0.2 aur
 * 0.1   start release
@@ -64,12 +69,21 @@ tell a software to save image in only text format, this not works with gif or vi
 ```
 -p --patterns
 ```
-change pattern glyph
+change pattern glyph<br/>
 ```
 -S --seek
 ```
-start video at seconds in double value, only for video
+start video at seconds in double value, only for video<br/>
+```
+-d --durate
+```
+select durate of conversion, at seconds in double value, only for video<br/>
 ### conversion examples
+try conversion with no extra arguments<br/>
+```
+$ tg -ci image.png
+```
+if output in not realy good can try to add more flags<br/>
 display image.png on terminal.<br/>
 ```
 $ tg --fonts 'Source Code Pro' --fallback 'Symbola' --size 11 --convert --input image.png
@@ -84,9 +98,8 @@ save image.png on image.tgi and display.<br/>
 $ tg -cfFsio 'Source Code Pro' 'Symbola' 11 image.png image.tgi
 $ tg -i image.tgi
 ```
-display image with no unicode character
+display image with no unicode character<br/>
 ```
 $ tg -cfFspi 'Source Code Pro' 'Symbola' 11 ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ/.,;:!@#%^$&*()_-+=[]{}|' image.png
 ```
-
 ## To uninstall it:

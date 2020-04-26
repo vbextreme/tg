@@ -31,6 +31,7 @@ typedef struct tg{
 	int* vfcrbits;
 	ftFonts_s* fonts;
 	double seeking;
+	double durate;
 	unsigned fontSize;
 	unsigned screenCol;
 	unsigned screenRow;
