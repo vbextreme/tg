@@ -1,0 +1,78 @@
+.TH "tg" 1 "Version 0.5" "Terminal Graphics"
+
+.SH NAME
+Terminal Graphics
+
+.SH SYNOPSIS
+.B pg
+[\fI\,OPTIONS\/\fR] [\fI\,ARGUMENTS\/\fR]
+.br
+
+.sh DESCRIPT
+Display image(png,jpeg,bmp,svg,gif) and video on terminal
+.br
+terminal need support of 24k color
+.br
+tested terminal: urxvt+tmux, xterm, tilda, kitty, alacritty, linux console(is not 24k, set pattern to ascii)
+.br
+failed: urxvt if not build with 24k support or without tmux
+.br
+
+.SH OPTIONS
+.TP
+\fB\-f\fR, \fB\-\-fonts\fR
+set font use on your terminal
+.TP
+\fB\-F\fR, \fB\-\-fallback\fR
+set fallback font
+.TP
+\fB\-s\fR, \fB\-\-size\fR
+set font size
+.TP
+\fB\-c\fR, \fB\-\-convert\fR
+convert image/video to output
+.TP
+\fB\-i\fR, \fB\-\-input\fR
+an input file
+.TP
+\fB\-o\fR, \fB\-\-output\fR
+output file, if no output file is select display image directly on stdout, video not support stdout and need output file
+.TP
+\fB\-a\fR, \fB\-\-aspect\fR 
+select aspect ratio -1 no scale, 0 auto, 1 width, 2 height
+.TP
+\fB\-r\fR, \fB\-\-raw\fR
+save image in only text format, this not works with gif or video, with this format can display image with cat software
+.TP
+\fB\-p\fR, \fB\-\-patterns\fR
+change pattern glyph
+.TP
+\fB\-S\fR, \fB\-\-seek\fR
+start video at seconds in double value, only for video
+.TP
+\fB\-d\fR, \fB\-\-durate\fR
+select durate of conversion, at seconds in double value, only for video
+
+.SH EXAMPLE
+.TP
+\fBtg \-ci image.png\fR
+try conversion with no extra arguments
+.TP
+\fBtg \-\-fonts 'Source Code Pro' \-\-fallback 'Symbola' \-\-size 11 \-\-convert \-\-input image.png\fR
+display image.png on terminal.
+.TP
+\fBtg \-f 'Source Code Pro' \-F 'Symbola' \-s 11 \-c \-i image.png \-r \-o image.txt\fR
+save image.png on image.txt this works only with images jpeg,gif,svn,png.
+.TP
+\fBtg \-cfFsio 'Source Code Pro' 'Symbola' 11 image.png image.tgi\fR
+save image.png on image.tgi
+.TP
+\fBtg -i image.tgi\fR
+display
+.TP
+\fBtg \-cfFspi 'Source Code Pro' 'Symbola' 11 ' abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ/.,;:!@#%^$&*()_-+=[]{}|' image.png\fR
+display image with no unicode character
+
+.SH "Author"
+.PP 
+vbextreme

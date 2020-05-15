@@ -1,8 +1,8 @@
 #Terminal Graphics v0.6
 Display image and video on terminal<br/>
 terminal need support of 24k color.<br/>
-tested terminal: urxvt+tmux, xterm, tilda, linux console(is not 24k, set pattern to ascii).<br/>
-failed: urxvt if not build with 24k support.<br/>
+tested terminal: urxvt+tmux, xterm, tilda, kitty, alacritty, linux console(is not 24k, set pattern to ascii).<br/>
+failed: urxvt if not build with 24k support or without tmux.<br/>
 
 ## State:
 * 0.5 complete seeking support

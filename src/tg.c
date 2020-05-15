@@ -39,7 +39,7 @@ void tg_begin(tg_s* tg, const char* fontName, const char* fontFall, int size, co
 	tg->fontFallback = fontFall ? fontFall : tg->fontName;
 	dbg_info("fonts:%s fallback:%s", tg->fontName, tg->fontFallback);
 
-	tg->fonts = ft_fonts_new();
+	tg->fonts = ft_fonts_new("tg");
 	if( !tg->fonts ) err_fail("creating fonts");
 	ftFont_s* font = ft_fonts_load(tg->fonts, tg->fontName, "main");
 	if( !font ) err_fail("unable to load %s font", tg->fontName);
@@ -53,8 +53,8 @@ void tg_begin(tg_s* tg, const char* fontName, const char* fontFall, int size, co
 	utf8Iterator_s it = utf8_iterator(tg->patterns, 0);
 	utf_t utf;
 	size_t count = utf_width(tg->patterns);
-	tg->vfcr = vector_new(ftRender_s*, count, 1);
-	tg->vfcrbits = vector_new(int, count, 1);
+	tg->vfcr = vector_new(ftRender_s*, count, NULL);
+	tg->vfcrbits = vector_new(int, count, NULL);
 	g2dCoord_s pos = {0};
 	while( (utf=utf8_iterator_next(&it)) ){
 		ftRender_s* render = ft_fonts_glyph_load(tg->fonts, utf, FT_RENDER_ANTIALIASED);
@@ -259,7 +259,7 @@ __private tgImg_s** tg_convert_gif(tg_s* tg, int aspectRatio){
 	if( rows > tg->screenRow ) err_fail("math rows %u > %u", rows, tg->screenRow);
 
 	size_t count = vector_count(gif->frames);
-	tgImg_s** tgi = vector_new(tgImg_s*, count, 1);
+	tgImg_s** tgi = vector_new(tgImg_s*, count, NULL);
 	vector_foreach(gif->frames, i){
 		tgImg_s* tgframe = tg_convert_g2d(tg, gif->frames[i].img, cols, rows);
 		tgframe->delay = gif->frames[i].delay;
@@ -451,21 +451,44 @@ void tg_view(tg_s* tg){
 	}
 	else if( sync ){
 		size_t us = time_us() - ts;
-		if( us < sync ) usleep(sync-us);	
+		if( us < sync ){
+			usleep(sync-us);
+		}
 		ts=time_us();
 	}
 	tg_frame_free(frame);
+	
+	size_t nframe = 1;
 
+//size_t timespeed = time_ms();
+//dbg_info("start");
 	while( (frame=tg_load_frame(fd)) ){
+		if( sync ){
+			long syvideo = nframe++ * sync;
+			long us = syvideo - (long)(time_us()-ts);
+			dbg_info("start %lu now %lu video %lu delay us %ld", ts, time_us()-ts, syvideo, us);
+			if( us > 0 ) delay_us(us);
+		}
+
 		term_gotorc(r,c);
 		tg_display(frame);
+//size_t endtime = time_ms();
+//double fps = 1.0/((double)(endtime-timespeed)/1000.0);
+//fprintf(stderr, "\rrefresh time %lu fps %f", endtime - timespeed, fps);
+//fprintf(stderr, "refresh time %lu fps %f\n", endtime - timespeed, fps);
+//timespeed = endtime;
 		if( frame->delay ){
 			delay_ms(frame->delay);
 		}
 		else if( sync ){
-			size_t us = time_us() - ts;
-			if( us < sync ) usleep(sync-us);
-			ts=time_us();
+			//long syvideo = nframe * sync;
+			//long us = (long)time_us() - syvideo;
+			//size_t us = time_us() - ts;
+			//if( us < sync ){
+			//	dbg_info("delay %lu",sync-us);
+			//	usleep(sync-us);
+			//}
+			//ts=time_us();
 		}
 		tg_frame_free(frame);
 	}

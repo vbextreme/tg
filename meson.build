@@ -141,6 +141,12 @@ endif
 # install #
 ###########
 
+if get_option('man') > 0
+  manc = run_command('allman')
+  manf = manc.stdout().strip().split('\n')
+  install_man(manf)
+endif
+
 ###########
 # license #
 ###########
@@ -153,5 +159,4 @@ message('released under GPLv3')
 #########
 
 executable(projectName, src, include_directories: includeDir, dependencies: libDeps, install: true)
-
 
